@@ -1,5 +1,6 @@
 /// <reference path="./vite-env.d.ts" />
 /// <reference path="./react-jsx.d.ts" />
+import React, { useMemo, useState } from "react"
 import {
   Card,
   CardContent,
@@ -10,27 +11,54 @@ import {
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts"
+
+const MONTHS_PER_YEAR = 12
+const YEARS = 80
+
+function compoundInterestByMonth(
+  principal: number,
+  monthlyPayment: number,
+  annualRatePercent: number
+): number[] {
+  const monthlyRate = annualRatePercent / 100 / MONTHS_PER_YEAR
+  const balances: number[] = [principal]
+  for (let month = 1; month <= YEARS * MONTHS_PER_YEAR; month++) {
+    const prev = balances[month - 1]
+    balances[month] = prev * (1 + monthlyRate) + monthlyPayment
+  }
+  return balances
+}
 
 function App() {
+  const [principal, setPrincipal] = useState("")
+  const [monthlyPayment, setMonthlyPayment] = useState("")
+  const [interestRate, setInterestRate] = useState("")
 
-  const chartData = [
-    { month: "January", desktop: 186, mobile: 80 },
-    { month: "February", desktop: 305, mobile: 200 },
-    { month: "March", desktop: 237, mobile: 120 },
-    { month: "April", desktop: 73, mobile: 190 },
-    { month: "May", desktop: 209, mobile: 130 },
-    { month: "June", desktop: 214, mobile: 140 },
-  ]
+  const chartData = useMemo(() => {
+    const p = parseFloat(principal) || 0
+    const m = parseFloat(monthlyPayment) || 0
+    const r = parseFloat(interestRate) || 0
+    const balances = compoundInterestByMonth(p, m, r)
+    return Array.from({ length: YEARS }, (_, i) => {
+      const yearIndex = (i + 1) * MONTHS_PER_YEAR
+      return {
+        year: `Rok ${i + 1}`,
+        kapitał: Math.round(balances[yearIndex] * 100) / 100,
+      }
+    })
+  }, [principal, monthlyPayment, interestRate])
 
   const chartConfig = {
-    desktop: {
-      label: "Desktop",
+    kapitał: {
+      label: "Kapitał (PLN)",
       color: "#2563eb",
-    },
-    mobile: {
-      label: "Mobile",
-      color: "#60a5fa",
     },
   } satisfies ChartConfig
 
@@ -52,6 +80,8 @@ function App() {
               placeholder="0"
               min={0}
               step="any"
+              value={principal}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrincipal(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
@@ -62,6 +92,8 @@ function App() {
               placeholder="0"
               min={0}
               step="any"
+              value={monthlyPayment}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMonthlyPayment(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
@@ -73,19 +105,26 @@ function App() {
               min={0}
               max={100}
               step="0.01"
+              value={interestRate}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInterestRate(e.target.value)}
             />
           </div>
         </CardContent>
       </Card>
 
       <ChartContainer config={chartConfig} className="w-full" style={{ height: 300 }}>
-        <BarChart accessibilityLayer data={chartData}>
+        <LineChart accessibilityLayer data={chartData}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="month" tickLine={false} axisLine={false} />
-          <YAxis tickLine={false} axisLine={false} />
-          <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-          <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-        </BarChart>
+          <XAxis dataKey="year" tickLine={false} axisLine={false} />
+          <YAxis tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+          <Line
+            type="monotone"
+            dataKey="kapitał"
+            stroke="var(--color-kapitał)"
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
       </ChartContainer>
     </div>
   )

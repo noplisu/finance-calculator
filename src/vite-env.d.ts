@@ -9,6 +9,8 @@ declare module "recharts" {
   export const Bar: any
   export const BarChart: any
   export const CartesianGrid: any
+  export const Line: any
+  export const LineChart: any
   export const XAxis: any
   export const YAxis: any
 }
