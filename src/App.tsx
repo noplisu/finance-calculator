@@ -88,7 +88,7 @@ function App() {
     finalBalance > 0 && totalInvested > 0 ? ((finalBalance - totalInvested) / totalInvested) * 100 : 0
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       {/* Hero */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
         <div className="mx-auto max-w-4xl px-4 py-10 text-center sm:px-6 sm:py-14">
@@ -109,8 +109,8 @@ function App() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-        <div className="grid gap-8 lg:grid-cols-[340px_1fr] lg:gap-10">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+        <div className="grid min-w-0 grid-cols-1 gap-8 lg:grid-cols-[340px_1fr] lg:gap-10">
           {/* Calculator card */}
           <Card className="h-fit border-2 border-primary/20 shadow-lg lg:sticky lg:top-8">
             <CardHeader className="pb-4">
@@ -236,7 +236,7 @@ function App() {
           </Card>
 
           {/* Chart + copy */}
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Wzrost kapitału w czasie</h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -245,7 +245,7 @@ function App() {
             </div>
             <Card className="overflow-hidden">
               <CardContent className="p-4 sm:p-6">
-                <ChartContainer config={chartConfig} className="w-full" style={{ height: 320 }}>
+                <ChartContainer config={chartConfig} className="min-h-[280px] w-full min-w-0 sm:min-h-[320px]" style={{ height: "clamp(280px, 50vmin, 320px)" }}>
                   <LineChart accessibilityLayer data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
