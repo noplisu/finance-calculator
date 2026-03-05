@@ -201,7 +201,7 @@ function App() {
                       tickFormatter={(month: number) => String(Math.ceil(month / MONTHS_PER_YEAR))}
                       interval={MONTHS_PER_YEAR - 1}
                     />
-                    <YAxis tickLine={false} axisLine={false} tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}k`} />
+                    <YAxis tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} />
                     <Tooltip
                       contentStyle={{ borderRadius: "8px", border: "1px solid var(--border)" }}
                       formatter={(value: number) => [
