@@ -21,6 +21,11 @@ import {
 } from "recharts"
 
 const MONTHS_PER_YEAR = 12
+const MAX_PRINCIPAL = 1_000_000_000
+const MAX_MONTHLY_PAYMENT = 1_000_000
+const MAX_INTEREST_RATE = 20
+const MAX_YEARS = 100
+const MIN_YEARS = 1
 
 function compoundInterestByMonth(
   principal: number,
@@ -45,10 +50,10 @@ function App() {
   const [years, setYears] = useState("30")
 
   const chartData = useMemo(() => {
-    const p = parseFloat(principal) || 0
-    const m = parseFloat(monthlyPayment) || 0
-    const r = parseFloat(interestRate) || 0
-    const y = Math.min(80, Math.max(1, Math.floor(parseFloat(years) || 30)))
+    const p = Math.min(MAX_PRINCIPAL, Math.max(0, parseFloat(principal) || 0))
+    const m = Math.min(MAX_MONTHLY_PAYMENT, Math.max(0, parseFloat(monthlyPayment) || 0))
+    const r = Math.min(MAX_INTEREST_RATE, Math.max(0, parseFloat(interestRate) || 0))
+    const y = Math.min(MAX_YEARS, Math.max(MIN_YEARS, Math.floor(parseFloat(years) || 30)))
     const balances = compoundInterestByMonth(p, m, r, y)
     const totalMonths = y * MONTHS_PER_YEAR
     return Array.from({ length: totalMonths }, (_, i) => {
@@ -73,9 +78,12 @@ function App() {
   const lastPoint = chartData[chartData.length - 1]
   const finalBalance: number = lastPoint ? lastPoint.kapitał : 0
   const hasInputs = [principal, monthlyPayment, interestRate].some((v: string) => v.trim() !== "")
-  const yearsNum = Math.min(80, Math.max(1, Math.floor(parseFloat(years) || 30)))
+  const yearsNum = Math.min(MAX_YEARS, Math.max(MIN_YEARS, Math.floor(parseFloat(years) || 30)))
+  const xAxisStepYears = Math.ceil(Math.log2(yearsNum) + 1)
+  const xAxisInterval = xAxisStepYears * MONTHS_PER_YEAR - 1
   const totalInvested: number =
-    (parseFloat(principal) || 0) + (parseFloat(monthlyPayment) || 0) * yearsNum * MONTHS_PER_YEAR
+    Math.min(MAX_PRINCIPAL, Math.max(0, parseFloat(principal) || 0)) +
+    Math.min(MAX_MONTHLY_PAYMENT, Math.max(0, parseFloat(monthlyPayment) || 0)) * yearsNum * MONTHS_PER_YEAR
   const growth: number =
     finalBalance > 0 && totalInvested > 0 ? ((finalBalance - totalInvested) / totalInvested) * 100 : 0
 
@@ -119,9 +127,21 @@ function App() {
                   type="number"
                   placeholder="np. 10000"
                   min={0}
+                  max={MAX_PRINCIPAL}
                   step="any"
                   value={principal}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPrincipal(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const v = e.target.value
+                  if (v === "" || v === "-") {
+                    setPrincipal(v)
+                    return
+                  }
+                  const n = parseFloat(v)
+                  if (!Number.isFinite(n)) return
+                  if (n < 0) setPrincipal("0")
+                  else if (n > MAX_PRINCIPAL) setPrincipal(String(MAX_PRINCIPAL))
+                  else setPrincipal(v)
+                }}
                 />
               </div>
               <div className="grid gap-2">
@@ -131,9 +151,21 @@ function App() {
                   type="number"
                   placeholder="np. 500"
                   min={0}
+                  max={MAX_MONTHLY_PAYMENT}
                   step="any"
                   value={monthlyPayment}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setMonthlyPayment(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const v = e.target.value
+                  if (v === "" || v === "-") {
+                    setMonthlyPayment(v)
+                    return
+                  }
+                  const n = parseFloat(v)
+                  if (!Number.isFinite(n)) return
+                  if (n < 0) setMonthlyPayment("0")
+                  else if (n > MAX_MONTHLY_PAYMENT) setMonthlyPayment(String(MAX_MONTHLY_PAYMENT))
+                  else setMonthlyPayment(v)
+                }}
                 />
               </div>
               <div className="grid gap-2">
@@ -143,10 +175,21 @@ function App() {
                   type="number"
                   placeholder="np. 5"
                   min={0}
-                  max={100}
+                  max={MAX_INTEREST_RATE}
                   step="0.01"
                   value={interestRate}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setInterestRate(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const v = e.target.value
+                  if (v === "" || v === "-") {
+                    setInterestRate(v)
+                    return
+                  }
+                  const n = parseFloat(v)
+                  if (!Number.isFinite(n)) return
+                  if (n < 0) setInterestRate("0")
+                  else if (n > MAX_INTEREST_RATE) setInterestRate(String(MAX_INTEREST_RATE))
+                  else setInterestRate(v)
+                }}
                 />
               </div>
               <div className="grid gap-2">
@@ -155,11 +198,22 @@ function App() {
                   id="years"
                   type="number"
                   placeholder="30"
-                  min={1}
-                  max={80}
+                  min={MIN_YEARS}
+                  max={MAX_YEARS}
                   step={1}
                   value={years}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => setYears(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  const v = e.target.value
+                  if (v === "") {
+                    setYears(v)
+                    return
+                  }
+                  const n = parseInt(v, 10)
+                  if (!Number.isFinite(n)) return
+                  if (n < MIN_YEARS) setYears(String(MIN_YEARS))
+                  else if (n > MAX_YEARS) setYears(String(MAX_YEARS))
+                  else setYears(v)
+                }}
                 />
               </div>
 
@@ -199,7 +253,10 @@ function App() {
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(month: number) => String(Math.ceil(month / MONTHS_PER_YEAR))}
-                      interval={MONTHS_PER_YEAR - 1}
+                      interval={xAxisInterval}
+                      angle={yearsNum > 20 ? -45 : 0}
+                      textAnchor={yearsNum > 20 ? "end" : "middle"}
+                      tick={{ fontSize: yearsNum > 40 ? 10 : undefined }}
                     />
                     <YAxis tickLine={false} axisLine={false} tickFormatter={(v: number) => `${v.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`} />
                     <Tooltip
